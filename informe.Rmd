@@ -1,36 +1,130 @@
 ---
-title: "titulo"
-author: "nombres"
+title: "Tp 1 y 2 GRUPO 26"
+author: "Claudia Magliano"
 output: html_document
 ---
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# Cargar los paquetes necesarios acá
+
+
+library(readr)
+library(dplyr)
 ```
 
 
 ## Introducción
 
-
+Este informe se centra en los datos provenientes de la Encuesta sobre Uso del Tiempo realizada en la Ciudad Autónoma de Buenos Aires durante el año 2016. Dicha encuesta fue instrumentada por la Dirección General de Estadísticas y Censos del Gobierno de la Ciudad y sus resultados fueron publicados en formato abierto en 2017. (https://data.buenosaires.gob.ar/dataset/uso-tiempo)
+Captura información sobre distintas variables de personas residentes en CABA: sexo, edad, nivel de estudios, horas dedicadas al trabajo productivo/pago, horas dedicadas al trabajo doméstico no pago, horas dedicadas a tareas de cuidado, tipo de hogar, ingresos (por quintiles) y estado ocupacional, entre otras. Incluye datos discretos dicotómicos como el sexo y datos continuos como el tiempo para cada tarea.
+A partir del análisis de los datos arrojados por esta encuesta se podría ponderar la diferencia en el uso del tiempo entre varones y mujeres (sobre todo en la esfera de los cuidados), el índice de la feminización de las tareas de cuidado, etc.
 
 ## Exploración de los datos
+```{r}
+uso_tiempo_2016<-read.csv("datos/encuesta_uso_tiempo_2016.csv")
+
+```
+
+¿Qué variables tiene? Tiene variables cuantitativas y cualitativas
+¿Cuántas observaciones hay? Hay 2336 filas (observaciones)
+¿Cuántas variables? 27 variables
+
+```{r}
+uso_tiempo_2016_seleccv<-uso_tiempo_2016|>
+select(sexo,edad,trabajo_pago,trabajo_pago2,trabajo_domestico_no_pago,trabajo_domestico_no_pago2,tareas_cuidados, tareas_cuidados2,nivel_educativo,estado_ocupacional,recreacion,recreacion2)
+
+```
+
+Conforme lo señalado en la consigna se seleccionaron las variables de interés y se asignó la info generada a una variable. En este punto tuvimos un problema de interpretación del dataset que no pudimos resolver, aún habiendo consultando el Informe 2017 sobre esta encuesta y el cuestionario de relevamiento. Como se observa, hay variables con misma denominación diferenciadas con el "2" que tienen valores disímiles en las observaciones. Ej: tareas_cuidados y tareas_cuidados2, ¿qué tipo de tareas de cuidado engloban esas distinciones? no lo sabemos..... La variable quintil_ingreso también la eliminamos porque tenía una sola categoría en las observaciones: 5to quintil de ingresos (procentaje de población más rica). También nos resultó raro porque en el Informe dice que se entrevistaron personas residentes en distintos barrios y asentamientos.
+
+```{r}
+filter(uso_tiempo_2016_seleccv,edad>=18)|>
+  group_by(sexo)|>
+  summarise(conteo = n())
+```
+
+Con la ejecución de este código nuestra idea fue ver cómo se compone la muestra excluyendo personas entrevistadas menores de 18 años, es decir que excluimos niños, niñas y adolescentes (conf. Ley N° 26.061). Lo que vimos es que hay 1316 observaciones (filas) correspondientes a mujeres y 953 a varones dentro de la variable sexo.
 
 
 ```{r}
-# Código para cargar o leer los datos
+uso_tiempo_2016_seleccv|>
+ filter (edad>=18)|>
+group_by(sexo)|>
+summarise(valor_prom_recreacion = mean(recreacion))
+```
+Los valores promedios del tiempo dedicado por hombres y mujeres de 18 años o más en CABA a actividades de recreación es parejo: 3 horas cada une aprox.
+
+```{r}
+Poblacion_activa_uso_del_tiempo <- uso_tiempo_2016|>
+  filter(edad > "18" & edad < "70" ) 
+
+Poblacion_activa <- select(Poblacion_activa_uso_del_tiempo, "trabajo_pago", "recreacion", "trabajo_domestico_no_pago", "estudio_educacion")
+
 ```
 
 
 
 ```{r}
-# Cödigo de R acá 
-# Agregá más bloques según sea necesario
+uso_tiempo_2016 |> 
+  select(sexo,trabajo_pago,trabajo_pago2,trabajo_domestico_no_pago,trabajo_domestico_no_pago2,tareas_cuidados, tareas_cuidados2, quintil_ingreso,rango_etario)
 ```
+
+Conforme la consigna se seleccionaron las variables de interés y se asignó la info generada por la selección a una variable.
+
+```{r}
+
+filter(uso_tiempo_2016, edad == "14")
+
+filEdad <- filter(uso_tiempo_2016, edad == "14")
+
+```
+Realizamos un filtro de encuestado de 14 años  
+
+```{r}
+uso_tiempo_2016|>
+  count("Varon", sexo)
+
+
+```
+
+cuenta la cantidad de varones y mujeres encuestadas
+
+```{r}
+summarize(uso_tiempo_2016, proporción_media = mean ("estudio_educacion", na.rm = TRUE))
+```
+
+Calculamos la media poblacional del tiempo empleado en educacion
+
+```{r}
+#uso_tiempo_2016_b <- read_csv("datos/encuesta_uso_tiempo_2016.csv")
+Analisis_trabajo <- uso_tiempo_2016|>
+  filter(edad >"18") |> 
+  group_by(sexo) |>
+  summarize( tiempo_Max = max(trabajo_pago), tiempo_Mim = min(trabajo_pago), desvio = sd(trabajo_pago), na.rm = TRUE)
+
+```
+Analisis sobre de la distribucion del  tiempo del trabajo remunerado diferenciado por sexo con bariables estadisticas
+
+```{r}
+activo <- uso_tiempo_2016|>
+  filter(edad > "18" & edad < "70" ) 
+
+Tiempo_activos <- select(activo, "trabajo_pago", "recreacion", "trabajo_domestico_no_pago", "estudio_educacion")
+ 
+```
+
+
+
+Analizamos el tiempo que le dedican las personas mayores de 18 y menores a 70 a las tareas principales de la semana
+
 
 
 
 ## Hipótesis
 
+ 1 ¿Que promedio de la poblacion masculina realiza tareas domenticas no remuneradas o del cuidado de personas?
+ 
+2 ¿Cual es el promedio de edad que mas tiempo dedica a las aplicaciones?
 
+3 ¿ En un dia laborable cual es el promedio de tiempo que le dedican al estudio las personas entre 18 y 25 años?
