@@ -1,7 +1,7 @@
 ---
-title: "Informe Final GRUPO 26"
+title: "Informe Grafico Feo GRUPO 26"
 author: "Claudia Magliano"
-date: "2023-06-21"
+date: "2023-08-11"
 output: 
   html_document:
     code_folding: hide
@@ -51,191 +51,13 @@ uso_tiempo_2016 <- uso_tiempo_2016|>
 
 ```
 
-Conforme lo señalado en la consigna, se seleccionaron las variables de interés y se asignó la información generada a una variable. Observamos que hay variables con misma denominación diferenciadas con el "2" que tienen valores disímiles en las observaciones y el diccionario de datos no especifica la diferencia entre ambas variables Ej.:" tareas\_ cuidados" y "tareas_cuidados2", ¿qué tipo de tareas de cuidado engloban esas distinciones? no lo sabemos..... La variable "quintil\_ ingreso" también la eliminamos porque tenía una sola categoría en las observaciones: el 5to quintil de ingresos (porcentaje de población más rica) y faltaban los otros cuatros. También nos resultó raro porque en el Informe dice que se entrevistaron personas residentes en distintos barrios y asentamientos.
-
+## Grafico Feo
 ```{r}
-filter(uso_tiempo_2016,edad>=18)|>
-  group_by(sexo)|>
-  summarise(conteo = n())|>
-  knitr::kable(col.names = c("Genero",  "Cantidad" ))
-            
+ggplot(uso_tiempo_2016, aes(trabajo_pago, edad)) +
+  geom_point(aes(color = nivel_educativo, size = sexo))
 ```
 
-Con la ejecución de este código nuestra idea fue ver cómo se compone la muestra excluyendo personas entrevistadas menores de 18 años, es decir que excluimos niños, niñas y adolescentes (conf. Ley N° 26.061). Lo que vimos es que hay 1316 observaciones (filas) correspondientes a mujeres y 953 a varones dentro de la variable sexo.
-
-```{r}
-uso_tiempo_2016|>
- filter (edad>=18)|>
-group_by(sexo)|>
-summarise(valor_prom_recreacion = mean(recreacion))
-```
-
-Los valores promedios del tiempo dedicado a recreación por hombres y por las mujeres, mayores de 18 años es parejo. En ambos casos promedian las 3 horas
-
-```{r}
-summarize(uso_tiempo_2016, proporción_media = mean (estudio_educacion, na.rm = TRUE))
-```
-
-Calculamos la media poblacional del tiempo empleado en educación
-
-```{r}
-
-uso_tiempo_2016|>
-  filter(edad >"18") |> 
-  group_by(sexo) |>
-  summarize( tiempo_Max = max(trabajo_pago, na.rm = TRUE), tiempo_Mim = min(trabajo_pago), desvio = sd(trabajo_pago) )
-  
-
-```
-
-Análisis sobre de la distribución del tiempo del trabajo remunerado diferenciado por sexo con variables estadísticas
-
-```{r}
-Tiempo_de_Adultos <- uso_tiempo_2016|>
-  filter(edad > "18" & edad < "70", ) |>
-  select( "trabajo_pago", "recreacion", "trabajo_domestico_no_pago", "tareas_cuidados")
-  
- 
-```
-
-Analizamos el tiempo que le dedican las personas mayores de 18 y menores a 70 a las tareas principales de la semana
-
-## Hipótesis
-
-*1 ¿Influye la falta de trabajo para que la población masculina se dedique más a tareas dementicas no remuneradas o del cuidado de personas?*
-
-```{r}
-Tiempo_activos <- uso_tiempo_2016|>
-  
-  filter(edad > "18" & edad < "65", sexo=="Varon" ) |>
-  select( "edad","trabajo_pago",  "trabajo_domestico_no_pago", "tareas_cuidados")
-```
-
-Filtramos y seleccionamos, según el interés de la población que queremos evaluar de acuerdo a la hipótesis
-
-```{r}
-Tiempo_activos<-mutate(Tiempo_activos, trabajoDelHogar =(trabajo_domestico_no_pago+tareas_cuidados ))
-```
-
-Armamos una tabla con dos columnas "trabajo_pago" que está en la tabla original y "trabajoDelHoga"r que suma "trabajo_domestico_no_pago" y "tareas_cuidados"
-
-```{r}
-vargrap <- Tiempo_activos|>
-  group_by(edad)|>
- summarise(mediadelhogar = mean(trabajoDelHogar,na.rm=TRUE), trabajopago = mean(trabajo_pago,na.rm=TRUE))
-
-```
-
-Calculamos media de ambas variables
-
-```{r}
-ggplot()+
-  geom_line(data=vargrap,aes(y=mediadelhogar,x= edad,colour="mediadelhogar"),size=1 )+
-  geom_line(data=vargrap,aes(y=trabajopago,x= edad,colour="trabajopago"),size=1) +
-  scale_color_manual(name = "Promedios", values = c("mediadelhogar" = "darkblue", "trabajopago" = "red")) +
-  labs(title='Tiempo ocupado en tareas hogareneas VS trabajo pago', y = "Tiempo empleado")
-
-```
-
-Otra forma de hacer este grafico
-
-```{r}
-vargrap |> 
-  pivot_longer(cols = -edad) |>    # alarga todas las columnas menos edad
-  ggplot(aes(edad, value)) +
-  geom_line(aes(color = name))
-```
-
-**Conclusión**
-
-Según el análisis de datos podemos inferir que ambas variables se comportan en forma independiente, es decir que no depende del grado de ocupación de trabajo pago fuera del hogar que tengan los hombres, para se ocupen más o menos de las tareas domésticas y de cuidado de personas en sus hogares. Si notamos más intensidad de la actividad del hogar entre los 30 y 55 años de edad, pudiendo inferir que se relaciona con que es la edad en que se tienen a la guarda primero los hijos y luego los padres ancianos
-
-*2 ¿Es decisivo el grupo etario a la hora de repartir mayor tiempo a las aplicaciones, es decir depende de la edad el mayor o menor tiempo que las personas dedican a las aplicaciones, los adolescentes las valoran más que otros entretenimientos?*
-
-```{r}
-vargrap2 <- uso_tiempo_2016 |>
-  group_by(edad)|>
-  filter(edad < 70) |>
-  summarise(Promedio_Aplicaciones = mean(aplicaciones,na.rm=TRUE),
-          DesvStandard = sd(aplicaciones,na.rm=TRUE))
-```
-
-Generamos una tabla  que nos da la media poblacional y el desvió estándar del uso de aplicaciones segun cada grupo generacional
-
-```{r}
-
-vargrap2 <- rbind (
-  vargrap2  |>   filter(edad < 23) |>
-  summarise(edad = "grupo 1",prom =mean(Promedio_Aplicaciones), dev = mean(DesvStandard)),
-
-  vargrap2  |>   filter(edad >= 23 & edad < 35 ) |>
-  summarise(edad = "grupo 2",prom =mean(Promedio_Aplicaciones), dev = mean(DesvStandard)),
-
-  vargrap2  |>   filter(edad >= 35 & edad < 45 ) |>
-  summarise(edad = "grupo 3",prom =mean(Promedio_Aplicaciones), dev = mean(DesvStandard)),
-
-  vargrap2  |>   filter(edad >= 45 & edad < 55 ) |>
-  summarise(edad = "grupo 4",prom =mean(Promedio_Aplicaciones), dev = mean(DesvStandard)),
-
-  vargrap2  |>   filter(edad >= 55 & edad < 70 ) |>
-  summarise(edad = "grupo 5",prom =mean(Promedio_Aplicaciones), dev = mean(DesvStandard))
-)
-
-vargrap2 <- rename(vargrap2, generacion = edad )
-
-```
-
-```{r}
- 
-#uso_tiempo_2016 %>% 
-  #group_by(rango_etario) %>% 
-  #count() 
-  
-```
+Graficamos el tiempo ocupado en trabajo remunerativo en relación a la edad, diferencian por el nivel educativo y el sexo de los individuos
 
 
-#Para poder visualizar mejor el comportamiento de las variables agrupamos la edad en grupos de frecuencia según los cortes etarios
 
-```{r}
-#grafico
-  ggplot(vargrap2, aes(x = generacion, y = prom)) +                     
-  geom_bar(width = 0.5, colour="red", fill="skyblue", stat = "identity")
-labs(title='Tiempo ocupado en el uso de aplicasiones segun grupo etario')
-
-  ggplot(vargrap2, aes(x = generacion, y = dev)) +
-  geom_bar(width = 0.5, colour="red", fill="lightgreen", stat = "identity")
-
-```
-
-Para analizar los datos de una forma más panorámica, hemos creado grupos generacionales:
-
-1.  Grupo 1: adolescentes de 14 a 22
-2.  Grupo 2: jóvenes de 23 a 34
-3.  Grupo3: Adultos jóvenes de 35 a 44
-4.  Grupo 4: adultos medios de 45 a 54
-5.  Grupo 5: adultos extendidos de 55 a 70
-
-**Conclusión**
-
-Al observar las gráficas podemos inferir que si es decisivo el grupo etario con el tiempo que se les dedica a las aplicaciones puesto que los desvíos estándar dan valores similares a las medias, esto significa que los datos, el tiempo dedicado, por grupo etario está bastante agrupado sobre su media. Por otro lado contrario a los que se pensaba inicialmente, hemos comprobado que el grupo etario mayor utiliza casi el mismo tiempo en aplicaciones que el grupo adolescente. No sabemos con este dato si utilizan la misma cantidad de aplicaciones o solo el mismo tiempo por ser más lentos al usarlas. El resto de los grupos etarios que coinciden con las edades más ocupadas laboralmente utilizan cantidades de tiempo similares y alrededor de la mitad de los extremos, por lo cual se podría suponer que en el 2016 las aplicaciones cumplían principalmente la función de entretenimiento, a diferencia del presente que se utilizan para la mayoría de los tramites y actividades cotidianas
-
-*3 ¿El promedio de tiempo que le dedican al estudio las personas entre 18 y 25 años, disminuye en relación con el de las personas que aún no están en edad laborable?*
-
-```{r}
-vargrap3 <- uso_tiempo_2016 |>
-  filter(edad >= 14 & edad < 25 ) |>
-  group_by (edad)|>
-  summarise (educa = mean(estudio_educacion,na.rm=TRUE))
-```
-
-Generamos una tabla para ver el promedio de tiempo que le dedican a la educación las personas hasta los 24 años
-
-```{r}
-ggplot(vargrap3, aes(x = edad, y = educa)) +                     
-  geom_line(width = 0.5, colour="red", stat = "identity")
-```
-
-
-**Conclusión**
-
-En este caso corroboramos la hipótesis y vemos que al aumentar la edad laborable baja el tiempo de estudio, ya sea porque se titulan y no continúan otra formación o porque abandonan el estudio formal para dedicarse a trabajar. El pico a los 20 se puede entender porque muchas personas a esa edad se estabilizaron en su vida, luego de la finalización del secundario e ingresan a estudios superiores que luego terminan abandonando. También se puede interpretar como que a esa edad están a mitad de la carrera de formación y es cuando más tiempo le requiere, pero el descenso hacia los 24 es inminente.
